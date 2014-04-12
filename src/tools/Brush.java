@@ -1,12 +1,13 @@
+package tools;
 import java.awt.BasicStroke;
 import java.awt.Graphics;
 
 
-public class Rubber extends Tool {
+public class Brush extends Tool {
 	int lastX = -1, lastY = -1;
 	int stroke = 10;
 	
-	Rubber(Graphics g1,Graphics g2) {
+	public Brush(Graphics g1,Graphics g2) {
 		super(g1,g2);
 		
 	}
@@ -15,8 +16,6 @@ public class Rubber extends Tool {
 	public void mousePressed(int x, int y) {
 		image.setStroke(new BasicStroke(stroke,BasicStroke.CAP_ROUND,BasicStroke.JOIN_MITER));
 		editing.setStroke(new BasicStroke(stroke,BasicStroke.CAP_ROUND,BasicStroke.JOIN_MITER));
-		image.setBackground(editing.getColor());
-		image.setColor(editing.getBackground());
 		lastX = x;
 		lastY = y;
 		
@@ -33,8 +32,6 @@ public class Rubber extends Tool {
 	@Override
 	public void mouseReleased(int x, int y) {
 		image.drawLine(lastX, lastY, x, y);
-		editing.setBackground(image.getColor());
-		editing.setColor(image.getBackground());
 		lastX = -1;
 		lastY = -1;
 		

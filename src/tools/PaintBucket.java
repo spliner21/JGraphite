@@ -1,3 +1,4 @@
+package tools;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.BasicStroke;
@@ -12,7 +13,7 @@ public class PaintBucket extends Tool {
 	boolean mark[][];
 	Queue<Point> pointsQueue;
 
-	PaintBucket(Graphics g1,Graphics g2) {
+	public PaintBucket(Graphics g1,Graphics g2) {
 		super(g1,g2);
 
 	}
@@ -35,6 +36,8 @@ public class PaintBucket extends Tool {
 
 
 	public void fillWithColor(int x, int y, BufferedImage img) {
+		if(x > img.getWidth() || y > img.getHeight())
+			return;
 		int crgb = img.getRGB(x, y);
 		mark = new boolean[img.getWidth()][img.getHeight()];
 		accepted = new Color(crgb & 0x00FFFFFF);

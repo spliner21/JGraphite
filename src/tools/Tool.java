@@ -1,3 +1,4 @@
+package tools;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -13,7 +14,7 @@ public abstract class Tool {
 	Graphics2D image;
 	Graphics2D editing;
 	
-	Tool(Graphics g1, Graphics g2) {
+	public Tool(Graphics g1, Graphics g2) {
 		image = (Graphics2D)g1;
 		editing = (Graphics2D)g2;
 		image.setBackground(Color.WHITE);

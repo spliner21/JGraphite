@@ -1,3 +1,4 @@
+package tools;
 
 /**
  * Enumeration used as constants for identifying tools used in editor 

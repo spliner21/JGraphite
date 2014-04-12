@@ -1,3 +1,4 @@
+package tools;
 import java.awt.BasicStroke;
 import java.awt.Graphics;
 
@@ -5,7 +6,7 @@ import java.awt.Graphics;
 public class Pencil extends Tool {
 	int lastX = -1, lastY = -1;
 
-	Pencil(Graphics g1,Graphics g2) {
+	public Pencil(Graphics g1,Graphics g2) {
 		super(g1,g2);
 		
 	}

@@ -1,3 +1,4 @@
+package tools;
 import java.awt.BasicStroke;
 import java.awt.Graphics;
 
@@ -7,7 +8,7 @@ public class Oval extends Tool {
 	int stroke = 5;
 	boolean fill = false;
 	
-	Oval(Graphics g1,Graphics g2) {
+	public Oval(Graphics g1,Graphics g2) {
 		super(g1,g2);
 		
 	}

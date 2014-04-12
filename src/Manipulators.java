@@ -39,6 +39,18 @@ public class Manipulators {
 		AffineTransformOp op = new AffineTransformOp(tx,AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
 		return op.filter(img, null).getData();
 	}
+
+	public static BufferedImage scale(BufferedImage img, int destWidth, int destHeight) { 
+	    GraphicsConfiguration gc = getDefaultConfiguration();
+	    BufferedImage result = gc.createCompatibleImage(destWidth, destHeight, img.getTransparency());
+	    Graphics2D g = result.createGraphics();
+	    
+	    g.drawImage(img,0,0,destWidth,destHeight, null);
+	    
+	    g.dispose();
+	    return result; 
+	}
+	
 	
 	public static GraphicsConfiguration getDefaultConfiguration() {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
