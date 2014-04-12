@@ -2,7 +2,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.Point;
 
 import javax.imageio.ImageIO;
@@ -58,16 +58,36 @@ import tools.Tool;
 import tools.ToolID;
 
 
+/**
+ * Main class of the program. Main window with all its elements and event control.
+ * @author spliner21
+ * @version 1.0
+ */
 public class JGraphiteMainWindow {
+	/* image dimensions */
 	int imgWidth = 500;
 	int imgHeight = 400;
 	
+	/* path to the file - used in saving and opening */
 	String bitmapPath = "";
 	
+	/* Tool colors - foreground and background color */
 	Color fgColor = Color.BLACK, bgColor = Color.WHITE;
 	
+	/* Main window frame */
 	private JFrame frmJgraphite;
 	
+	/* Global elements
+	 * those, which vars are needed not only during construction */
+	DrawingPanel panel;
+	JScrollPane scrollPane;
+	JSpinner thickness;
+	JCheckBox chckbxFillWithColor;
+	JButton btnUndo, btnRedo;
+	JMenuItem mntmUndo, mntmRedo;
+	Button[] colorBtn;
+	
+	/* Tools */
 	ToolID mode;
 	Brush brush;
 	Rubber rubber;
@@ -78,14 +98,8 @@ public class JGraphiteMainWindow {
 	PaintBucket pBucket;
 	Tool currTool;
 	
-	DrawingPanel panel;
-	JScrollPane scrollPane;
-	JSpinner thickness;
-	JCheckBox chckbxFillWithColor;
-	JButton btnUndo, btnRedo;
-	JMenuItem mntmUndo, mntmRedo;
-	
-	Stack<BufferedImage> undoList, redoList;
+	/* Undo and redo stacks */
+	Stack<BufferedImage> undoStack, redoStack;
 	
 	/**
 	 * Launch the application.
@@ -96,7 +110,7 @@ public class JGraphiteMainWindow {
 				try {
 					JGraphiteMainWindow window = new JGraphiteMainWindow();
 					
-					window.refreshGraphics();
+					window.panel.drawResultImage();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -121,39 +135,37 @@ public class JGraphiteMainWindow {
 		frmJgraphite.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		frmJgraphite.setJMenuBar(createMenuBar());
-				
-
-		frmJgraphite.getContentPane().add(createTopToolBar(), BorderLayout.NORTH);
 		
-		
+		/* Create the toolbars */
+		frmJgraphite.getContentPane().add(createTopToolBar(), BorderLayout.NORTH);		
 		frmJgraphite.getContentPane().add(createColorToolBar(), BorderLayout.SOUTH);
-
-
 		frmJgraphite.getContentPane().add(createLeftToolBar(), BorderLayout.WEST);
 		
-		generateContentView();
-		
+		/* ScrollPane creation - it is main window image view */
+		generateContentView();		
 		frmJgraphite.getContentPane().add(scrollPane, BorderLayout.CENTER);
 		
+		/* Show the window */
 		frmJgraphite.setVisible(true);
 		
-		Graphics2D gc = (Graphics2D)panel.getResultImage().getGraphics();
-        gc.setColor(bgColor);
-        gc.fillRect(0, 0, imgWidth, imgHeight); // fill in background
-            
-        undoList = new Stack<BufferedImage>();
-        redoList = new Stack<BufferedImage>();
+        /* Initialize undo and redo stacks */
+        undoStack = new Stack<BufferedImage>();
+        redoStack = new Stack<BufferedImage>();
         
-        refreshGraphics();
-        
+        /* Display initial image */
+        panel.drawResultImage();      
+        /* Initialize tools */
         constructTools();
-		
-
 	}
 
+	/**
+	 * Construct menu bar content
+	 * @return menu bar with it contents
+	 */
 	private JMenuBar createMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
 		
+		/* File menu */
 		JMenu mnFile = new JMenu("File");
 		menuBar.add(mnFile);
 		
@@ -205,6 +217,7 @@ public class JGraphiteMainWindow {
 		});
 		mnFile.add(mntmClose);
 		
+		/* Edit menu */
 		JMenu mnEdit = new JMenu("Edit");
 		menuBar.add(mnEdit);
 		
@@ -234,7 +247,7 @@ public class JGraphiteMainWindow {
 			public void actionPerformed(ActionEvent e) {
 				panel.setResultImageData((Manipulators.flip(panel.getResultImage(), false)));
 				panel.copyResultToWip();
-	    		refreshGraphics();
+	    		panel.drawResultImage();
 			}
 		});
 		mnEdit.add(mntmFlipHorizontally);
@@ -244,7 +257,7 @@ public class JGraphiteMainWindow {
 			public void actionPerformed(ActionEvent e) {
 				panel.setResultImageData((Manipulators.flip(panel.getResultImage(), true)));
 				panel.copyResultToWip();
-	    		refreshGraphics();
+	    		panel.drawResultImage();
 			}
 		});
 		mnEdit.add(mntmFlipVertically);
@@ -258,9 +271,7 @@ public class JGraphiteMainWindow {
 				panel.setResultImage(Manipulators.rotate(panel.getResultImage(), 90));
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 90));
 				refreshTools();
-				int tmp = imgWidth;
-				imgWidth = imgHeight;
-				imgHeight = tmp;
+
 				refreshScrolls();
 			}
 		});
@@ -272,9 +283,7 @@ public class JGraphiteMainWindow {
 				panel.setResultImage(Manipulators.rotate(panel.getResultImage(), 270));
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 270));
 				refreshTools();
-				int tmp = imgWidth;
-				imgWidth = imgHeight;
-				imgHeight = tmp;
+				
 				refreshScrolls();
 			}
 		});
@@ -287,7 +296,7 @@ public class JGraphiteMainWindow {
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 180));
 				refreshTools();
 
-	    		refreshGraphics();
+	    		panel.drawResultImage();
 			}
 		});
 		mnEdit.add(mntmRotate180);
@@ -303,6 +312,7 @@ public class JGraphiteMainWindow {
 		});
 		mnEdit.add(mntmResize);
 		
+		/* Tools menu */
 		JMenu mnTools = new JMenu("Tools");
 		menuBar.add(mnTools);
 		
@@ -368,6 +378,7 @@ public class JGraphiteMainWindow {
 		});
 		mnTools.add(mntmPaintBucket);
 		
+		/* Help menu */
 		JMenu mnHelp = new JMenu("Help");
 		menuBar.add(mnHelp);
 		
@@ -377,10 +388,15 @@ public class JGraphiteMainWindow {
 		return menuBar;
 	}
 	
+	/**
+	 * Method for top toolbar initialization - file manipulation + undo and redo + tool properties
+	 * @return top toolbar
+	 */
 	private JToolBar createTopToolBar() {
 
 		JToolBar toolBar = new JToolBar();
 		
+		/* New file button */
 		JButton btnNew = new JButton("");
 		btnNew.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -391,6 +407,7 @@ public class JGraphiteMainWindow {
 		btnNew.setIcon(new ImageIcon(getClass().getResource("icons/new.png")));
 		toolBar.add(btnNew);
 		
+		/* Open file button */
 		JButton btnOpen = new JButton("");
 		btnOpen.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -401,6 +418,7 @@ public class JGraphiteMainWindow {
 		btnOpen.setIcon(new ImageIcon(getClass().getResource("icons/open.png")));
 		toolBar.add(btnOpen);
 		
+		/* Save button */
 		JButton btnSave = new JButton("");
 		btnSave.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -411,23 +429,24 @@ public class JGraphiteMainWindow {
 		btnSave.setIcon(new ImageIcon(getClass().getResource("icons/save.png")));
 		toolBar.add(btnSave);
 
-
+		/* Save as button */
 		JButton btnSaveAs = new JButton("");
 		btnSaveAs.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				saveFile(true);
 			}
 		});
-		btnSaveAs.setToolTipText("Save...");
+		btnSaveAs.setToolTipText("Save as...");
 		btnSaveAs.setIcon(new ImageIcon(getClass().getResource("icons/saveas.png")));
 		toolBar.add(btnSaveAs);
 		
-		JSeparator separator_10 = new JSeparator();
-		separator_10.setOrientation(SwingConstants.VERTICAL);
-		separator_10.setPreferredSize(new Dimension(10, 20));
-		separator_10.setMaximumSize(new Dimension(10, 25));
-		toolBar.add(separator_10);
+		JSeparator separator = new JSeparator();
+		separator.setOrientation(SwingConstants.VERTICAL);
+		separator.setPreferredSize(new Dimension(10, 20));
+		separator.setMaximumSize(new Dimension(10, 25));
+		toolBar.add(separator);
 		
+		/* Undo button */
 		btnUndo = new JButton("");
 		btnUndo.setToolTipText("Undo");
 		btnUndo.setIcon(new ImageIcon(getClass().getResource("icons/undo.png")));
@@ -439,6 +458,7 @@ public class JGraphiteMainWindow {
 		});
 		toolBar.add(btnUndo);
 		
+		/* Redo button */
 		btnRedo = new JButton("");
 		btnRedo.setToolTipText("Redo");
 		btnRedo.setIcon(new ImageIcon(getClass().getResource("icons/redo.png")));
@@ -450,12 +470,10 @@ public class JGraphiteMainWindow {
 		});
 		toolBar.add(btnRedo);
 		
-		JSeparator separator_11 = new JSeparator();
-		toolBar.add(separator_11);
+		JSeparator spaceSeparator = new JSeparator();
+		toolBar.add(spaceSeparator);
 		
-		JSeparator separator_12 = new JSeparator();
-		toolBar.add(separator_12);
-		
+		/* Thickness tool property */
 		JLabel lblThickness = new JLabel("Thickness");
 		toolBar.add(lblThickness);
 
@@ -488,6 +506,7 @@ public class JGraphiteMainWindow {
 		});
 		toolBar.add(thickness);
 		
+		/* Fill checkbox - for rectangle and oval */
 		chckbxFillWithColor = new JCheckBox("Fill with color");
 		chckbxFillWithColor.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
@@ -502,19 +521,23 @@ public class JGraphiteMainWindow {
 					break;
 				}
 			}
-		});
-		
+		});		
 		chckbxFillWithColor.setEnabled(false);
 		toolBar.add(chckbxFillWithColor);
 		
 		return toolBar;
 	}
 	
+	/**
+	 * Method for color toolbar initialization. 
+	 * @return color toolbar
+	 */
 	private JToolBar createColorToolBar() {
 		JToolBar toolBar = new JToolBar();
 		JPanel panel = new JPanel();
 		toolBar.add(panel);
 		
+		/* Foreground and background color buttons */
 		final Button fgColorBtn = new Button("");
 		fgColorBtn.setActionCommand("");
 		fgColorBtn.setBackground(Color.BLACK);
@@ -526,11 +549,11 @@ public class JGraphiteMainWindow {
 		bgColorBtn.setBackground(Color.WHITE);
 		panel.add(bgColorBtn);
 		
-		JSeparator separator_13 = new JSeparator();
-		separator_13.setMaximumSize(new Dimension(10, 25));
-		panel.add(separator_13);
+		JSeparator separator = new JSeparator();
+		separator.setMaximumSize(new Dimension(10, 25));
+		panel.add(separator);
 		
-
+		/* Eight basic colors buttons */
 		Button color1Btn = new Button("");
 		color1Btn.setActionCommand("");
 		color1Btn.setBackground(Color.BLACK);
@@ -577,7 +600,7 @@ public class JGraphiteMainWindow {
 		panel.add(color8Btn);
 		
 
-		final Button[] colorBtn = new Button[]{color1Btn,color2Btn,color3Btn,color4Btn,color5Btn,color6Btn,color7Btn,color8Btn};
+		colorBtn = new Button[]{color1Btn,color2Btn,color3Btn,color4Btn,color5Btn,color6Btn,color7Btn,color8Btn};
 		
 		for(final Button b: colorBtn)
 		{
@@ -601,6 +624,10 @@ public class JGraphiteMainWindow {
 		return toolBar;
 	}
 	
+	/**
+	 * Method for left toolbar initialization - tools and manipulators. 
+	 * @return left toolbar.
+	 */
 	private JToolBar createLeftToolBar() {
 		JToolBar toolBar = new JToolBar();
 		toolBar.setOrientation(SwingConstants.VERTICAL);
@@ -702,7 +729,7 @@ public class JGraphiteMainWindow {
 				panel.setResultImageData((Manipulators.flip(panel.getResultImage(), false)));
 				panel.copyResultToWip();
 				
-	    		refreshGraphics();
+	    		panel.drawResultImage();
 			}
 		});
 		toolBar.add(btnFlipH);
@@ -717,7 +744,7 @@ public class JGraphiteMainWindow {
 				panel.setResultImageData((Manipulators.flip(panel.getResultImage(), true)));
 				panel.copyResultToWip();;
 				
-	    		refreshGraphics();
+	    		panel.drawResultImage();
 			}
 		});
 		toolBar.add(btnFlipV);
@@ -732,9 +759,6 @@ public class JGraphiteMainWindow {
 				panel.setResultImage(Manipulators.rotate(panel.getResultImage(), 90));
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 90));
 				refreshTools();
-				int tmp = imgWidth;
-				imgWidth = imgHeight;
-				imgHeight = tmp;
 				
 				refreshScrolls();
 			}
@@ -751,9 +775,6 @@ public class JGraphiteMainWindow {
 				panel.setResultImage(Manipulators.rotate(panel.getResultImage(), 270));
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 270));
 				refreshTools();
-				int tmp = imgWidth;
-				imgWidth = imgHeight;
-				imgHeight = tmp;
 				
 				refreshScrolls();
 			}
@@ -771,7 +792,7 @@ public class JGraphiteMainWindow {
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 180));
 				refreshTools();
 
-	    		refreshGraphics();
+	    		panel.drawResultImage();
 			}
 		});
 		toolBar.add(btnRotate180);
@@ -782,7 +803,11 @@ public class JGraphiteMainWindow {
 		return toolBar;
 	}
 	
+	/**
+	 * Content view initialization - panting area.
+	 */
 	private void generateContentView() {
+		/* ScrollPane initialization and event reactions. */
 		scrollPane = new JScrollPane();
 		scrollPane.addComponentListener(new ComponentAdapter() {
 			@Override
@@ -790,24 +815,23 @@ public class JGraphiteMainWindow {
 	    		refreshScrolls();
 			}
 		});
-		
 		scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
 			
 			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e) {
-	    		refreshGraphics();					
+	    		panel.drawResultImage();					
 			}
 		});
 		scrollPane.getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
 			
 			@Override
 			public void adjustmentValueChanged(AdjustmentEvent e) {
-	    		refreshGraphics();
+	    		panel.drawResultImage();
 				
 			}
 		});
 		
-				
+		/* Drawing panel initialization and drawing event definition */
 		panel = new DrawingPanel(imgWidth, imgHeight);
 		panel.setPreferredSize(new Dimension(imgWidth, imgHeight));
 		panel.addMouseMotionListener(new MouseMotionAdapter() {
@@ -826,7 +850,7 @@ public class JGraphiteMainWindow {
 				addToUndo();
 				currTool.mousePressed(e.getX(), e.getY());
 
-	    		refreshGraphics();
+	    		panel.drawResultImage();
 			}
 			@Override
 			public void mouseReleased(MouseEvent e) {
@@ -836,7 +860,7 @@ public class JGraphiteMainWindow {
 				else
 					pBucket.fillWithColor(e.getX(), e.getY(),panel.getResultImage());
 
-				refreshGraphics();
+				panel.drawResultImage();
 				
 			}
 		});
@@ -844,14 +868,20 @@ public class JGraphiteMainWindow {
 		scrollPane.setViewportView(panel);
 	}
 	
+	/**
+	 * Tools initialization 
+	 */
 	private void constructTools() {
-		brush = new Brush(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		rubber = new Rubber(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		line = new Line(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		pencil = new Pencil(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		rect = new Rectangle(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		oval = new Oval(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		pBucket = new PaintBucket(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
+		Graphics res, wip;
+		res = panel.getResultImage().getGraphics();
+		wip = panel.getWipImage().getGraphics();
+		brush = new Brush(res,wip);
+		rubber = new Rubber(res,wip);
+		line = new Line(res,wip);
+		pencil = new Pencil(res,wip);
+		rect = new Rectangle(res,wip);
+		oval = new Oval(res,wip);
+		pBucket = new PaintBucket(res,wip);
 		refreshColors();
 		currTool = brush;
 		
@@ -859,10 +889,13 @@ public class JGraphiteMainWindow {
 		
 	}
 	
+	/**
+	 * Tool change 
+	 * @param t ID of Tool to change to.
+	 */
 	private void changeTool(ToolID t) {
-
 		mode = t;
-		switch(t) {
+		switch(mode) {
 		case Brush:
 			currTool = brush;
 			thickness.setEnabled(true);
@@ -911,17 +944,26 @@ public class JGraphiteMainWindow {
 		}
 	}
 	
+	/**
+	 * Refresh tool graphics reference - needed when image variables are completely replaced.
+	 */
 	private void refreshTools() {
-		brush.refreshGraphics(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		line.refreshGraphics(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		pencil.refreshGraphics(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		rect.refreshGraphics(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		oval.refreshGraphics(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		rubber.refreshGraphics(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
-		pBucket.refreshGraphics(panel.getResultImage().getGraphics(),panel.getWipImage().getGraphics());
+		Graphics res, wip;
+		res = panel.getResultImage().getGraphics();
+		wip = panel.getWipImage().getGraphics();
+		brush.refreshGraphics(res,wip);
+		line.refreshGraphics(res,wip);
+		pencil.refreshGraphics(res,wip);
+		rect.refreshGraphics(res,wip);
+		oval.refreshGraphics(res,wip);
+		rubber.refreshGraphics(res,wip);
+		pBucket.refreshGraphics(res,wip);
 		refreshColors();
 	}
 	
+	/**
+	 * Colors refresh. Needed for example when image graphics reference is changed.
+	 */
 	private void refreshColors() {
 		brush.changeColors(fgColor, bgColor);
 		line.changeColors(fgColor, bgColor);
@@ -931,69 +973,74 @@ public class JGraphiteMainWindow {
 		rubber.changeColors(fgColor, bgColor);
 		pBucket.changeColors(fgColor, bgColor);
 	}
-
 	
-	private void refreshGraphics() {
-		panel.drawResultImage();
-	}
-	
+	/**
+	 * Refresh scrolls - when window is resized or image size changed.
+	 */
 	private void refreshScrolls() {
+		imgWidth = panel.getResultImage().getWidth();
+		imgHeight = panel.getResultImage().getHeight();
 		panel.setPreferredSize(new Dimension(imgWidth,imgHeight));
 		panel.setSize(imgWidth,imgHeight);
 		scrollPane.revalidate();
-		refreshGraphics();
+		panel.drawResultImage();
 		
 	}
 		
+	/**
+	 * New image action.
+	 */
 	private void newImage() {
-
-		ImageSize newBitmapSize = new ImageSize(frmJgraphite);
-		
+		ImageSize newBitmapSize = new ImageSize(frmJgraphite);		
 		newBitmapSize.display();
 		
-		Point dimensions = newBitmapSize.returnDimensions();
-		
+		Point dimensions = newBitmapSize.returnDimensions();		
 		if(dimensions == null)
 			return;
 
 		imgWidth = dimensions.x;
 		imgHeight = dimensions.y;
-		panel.constructImage(imgWidth, imgHeight);// fill in background
+		panel.constructImage(imgWidth, imgHeight);
 
-        refreshScrolls();
-		
+        refreshScrolls();		
 		refreshTools();
 	}
 	
+	/**
+	 * Open file action.
+	 */
 	private void openFile() {
 		int ret = -1;
+		/* Open file dialog */
 		JFileChooser fOpenDialog = new JFileChooser();
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("BMP File","bmp");
 		fOpenDialog.setFileFilter(filter);
+		
 		ret = fOpenDialog.showOpenDialog(null);
+		
+		/* If "Open" was clicked */
 		if(ret == JFileChooser.APPROVE_OPTION) {
 			bitmapPath = fOpenDialog.getSelectedFile().getAbsolutePath();
 			try {
+				/* read files */
 				URL url = fOpenDialog.getSelectedFile().toURI().toURL();
 	            panel.setResultImage(ImageIO.read(url));
-	            {
-	                System.out.println("-- opened" + bitmapPath);
-	            }
 	            panel.setWipImage(ImageIO.read(url));
 
 	            imgWidth = panel.getResultImage().getWidth();
 	            imgHeight = panel.getResultImage().getHeight();
 	            
-	            undoList.clear();
-	            redoList.clear();
+	            /* Clear stacks */
+	            undoStack.clear();
+	            redoStack.clear();
 	            
+	            /* disable undo and redo buttons */
 	            btnUndo.setEnabled(false);
 	            btnRedo.setEnabled(false);
 	            mntmUndo.setEnabled(false);
 	            mntmRedo.setEnabled(false);
 	            
-	            refreshScrolls();
-				
+	            refreshScrolls();				
 				refreshTools();
 				
 		    } catch (IOException ex) {
@@ -1002,55 +1049,62 @@ public class JGraphiteMainWindow {
 		}
 	}
 	
+	/**
+	 * Save and Save as actions
+	 * @param saveAs if true, then always opens a save dialog. if false, only when first save of image is performed, the save dialog is opened.
+	 */
 	private void saveFile(boolean saveAs) {
 		int ret = -1;
+		/* If file was not saved before or "Save as..." was clicked */
 		if(bitmapPath.equals("") || saveAs) {
 			JFileChooser fSaveDialog = new JFileChooser();
 			FileNameExtensionFilter filter = new FileNameExtensionFilter("BMP File","bmp");
 			fSaveDialog.setFileFilter(filter);
 			ret = fSaveDialog.showSaveDialog(null);
+			
+			/* If "Save" was clicked */
 			if(ret == JFileChooser.APPROVE_OPTION) {
 				bitmapPath = fSaveDialog.getSelectedFile().getAbsolutePath();
+				if(!bitmapPath.endsWith(".bmp"))
+					bitmapPath += ".bmp";
 			}
 		}
 		if(ret != JFileChooser.CANCEL_OPTION) {
 			try {
-	            if (ImageIO.write(panel.getResultImage(), "bmp", new File(bitmapPath)))
-	            {
-	                System.out.println("-- saved");
-	            }
+	            ImageIO.write(panel.getResultImage(), "bmp", new File(bitmapPath));
 		    } catch (IOException ex) {
 	            ex.printStackTrace();
 		    }
 		}
 	}
 	
+	/**
+	 * Adds actual result image to undo
+	 */
 	private void addToUndo() {
-		if(undoList.size() > 10) {
-			for(int i = undoList.size()-1; i >= 10; --i)
-				undoList.removeElementAt(i);
-		}
 		BufferedImage res = panel.getResultImage();
 		BufferedImage tmp = new BufferedImage(res.getWidth(), res.getHeight(), res.getType());
 		tmp.setData(res.getData());
-		undoList.add(tmp);
-		redoList.clear();
+		undoStack.add(tmp);
+		redoStack.clear();
 		btnUndo.setEnabled(true);
 		btnRedo.setEnabled(false);
         mntmUndo.setEnabled(true);
-        mntmRedo.setEnabled(false);
-		
+        mntmRedo.setEnabled(false);		
 	}
 
+	/**
+	 * Undo operation - adds actual result image to redo, and replaces result image with last undo.
+	 */
 	private void undo() {
 		BufferedImage res = panel.getResultImage();
 		BufferedImage tmp = new BufferedImage(res.getWidth(), res.getHeight(), res.getType());
 		tmp.setData(res.getData());
-		redoList.add(tmp);
+		redoStack.add(tmp);
 		
-		panel.setResultImage(undoList.pop());
+		panel.setResultImage(undoStack.pop());
 
-		if(undoList.size() == 0) {
+		if(undoStack.size() == 0) {
 			btnUndo.setEnabled(false);
 	        mntmUndo.setEnabled(false);
 		}
@@ -1060,16 +1114,19 @@ public class JGraphiteMainWindow {
 		refreshTools();
 		refreshScrolls();
 	}
-	
+
+	/**
+	 * Redo operation - adds actual result image to undo, and replaces result image with last redo.
+	 */
 	private void redo() {
 		BufferedImage res = panel.getResultImage();
 		BufferedImage tmp = new BufferedImage(res.getWidth(), res.getHeight(), res.getType());
 		tmp.setData(res.getData());
-		undoList.add(tmp);
+		undoStack.add(tmp);
 
-		panel.setResultImage(redoList.pop());
+		panel.setResultImage(redoStack.pop());
 
-		if(redoList.size() == 0) {
+		if(redoStack.size() == 0) {
 			btnRedo.setEnabled(false);
 			mntmRedo.setEnabled(false);
 		}	
@@ -1080,6 +1137,9 @@ public class JGraphiteMainWindow {
 		refreshScrolls();
 	}
 	
+	/**
+	 * Resize operation - uses manipulators.scale.
+	 */
 	private void resize() {
 		ImageSize bitmapResize = new ImageSize(frmJgraphite);
 		
