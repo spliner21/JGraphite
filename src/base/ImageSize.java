@@ -1,3 +1,4 @@
+package base;
 
 
 import java.awt.BorderLayout;
@@ -19,16 +20,25 @@ import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
+/**
+ * Class that creates dialog request for image dimension
+ * @author spliner21
+ */
 public class ImageSize {
-
+	/* necessary elements */
     private JFrame parent;
 	private JDialog dialog;
 	
 	private JSpinner textWidth;
 	private JSpinner textHeight;
 	
+	/* returned value */
 	private Point dimensions;
 
+	/**
+	 * Constructor with parent window element 
+	 * @param parent parent window frame
+	 */
 	public ImageSize(JFrame parent) {
 		this.parent = parent;
 	}
@@ -68,27 +78,21 @@ public class ImageSize {
 		panel_1 = new JPanel();
 		JLabel lblWidth = new JLabel("Width:");
 		panel_1.add(lblWidth);
-		
-		SpinnerNumberModel model = new SpinnerNumberModel(500, 0, 10000, 1);   
-		textWidth = new JSpinner(model);
+		 
+		textWidth = new JSpinner(new SpinnerNumberModel(500, 0, 10000, 1));
 		JComponent field = ((JSpinner.DefaultEditor) textWidth.getEditor());
-	    Dimension prefSize = field.getPreferredSize();
-	    prefSize = new Dimension(100, prefSize.height);
-	    field.setPreferredSize(prefSize);
+	    field.setPreferredSize(new Dimension(100, field.getPreferredSize().height));
 		panel_1.add(textWidth);
 		
 		panel_2 = new JPanel();
-
 		JLabel lblHeight = new JLabel("Height:");
 		panel_2.add(lblHeight);
 
-		model = new SpinnerNumberModel(400, 0, 10000, 1);   
-		textHeight = new JSpinner(model);
+		textHeight = new JSpinner(new SpinnerNumberModel(400, 0, 10000, 1));
 		field = ((JSpinner.DefaultEditor) textHeight.getEditor());
-	    prefSize = field.getPreferredSize();
-	    prefSize = new Dimension(100, prefSize.height);
-	    field.setPreferredSize(prefSize);
+	    field.setPreferredSize(new Dimension(100, field.getPreferredSize().height));
 		panel_2.add(textHeight);
+		
 		contentPanel.add(panel_0);
 		contentPanel.add(panel_1);
 		contentPanel.add(panel_2);
@@ -123,6 +127,10 @@ public class ImageSize {
 		return contentPanel;
 	}
 	
+	/**
+	 * Method for gathering dialog response
+	 * @return image dimensions (x,y)
+	 */
 	public Point returnDimensions() {
 		return dimensions;
 	}

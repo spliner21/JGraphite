@@ -1,3 +1,4 @@
+package base;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -12,6 +13,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JToolBar;
@@ -49,6 +51,7 @@ import javax.swing.ImageIcon;
 
 import tools.Brush;
 import tools.Line;
+import tools.Manipulators;
 import tools.Oval;
 import tools.PaintBucket;
 import tools.Pencil;
@@ -129,6 +132,7 @@ public class JGraphiteMainWindow {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		
 		frmJgraphite = new JFrame();
 		frmJgraphite.setTitle("JGraphite");
 				frmJgraphite.setBounds(100, 100, 720, 565);
@@ -245,6 +249,7 @@ public class JGraphiteMainWindow {
 		JMenuItem mntmFlipHorizontally = new JMenuItem("Flip horizontally");
 		mntmFlipHorizontally.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+	    		addToUndo();
 				panel.setResultImageData((Manipulators.flip(panel.getResultImage(), false)));
 				panel.copyResultToWip();
 	    		panel.drawResultImage();
@@ -255,6 +260,7 @@ public class JGraphiteMainWindow {
 		JMenuItem mntmFlipVertically = new JMenuItem("Flip vertically");
 		mntmFlipVertically.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+	    		addToUndo();
 				panel.setResultImageData((Manipulators.flip(panel.getResultImage(), true)));
 				panel.copyResultToWip();
 	    		panel.drawResultImage();
@@ -268,6 +274,7 @@ public class JGraphiteMainWindow {
 		JMenuItem mntmRotate90cw = new JMenuItem("Rotate 90\u00BA CW");
 		mntmRotate90cw.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+	    		addToUndo();
 				panel.setResultImage(Manipulators.rotate(panel.getResultImage(), 90));
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 90));
 				refreshTools();
@@ -280,6 +287,7 @@ public class JGraphiteMainWindow {
 		JMenuItem mntmRotate90ccw = new JMenuItem("Rotate 90\u00BA CCW");
 		mntmRotate90ccw.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+	    		addToUndo();
 				panel.setResultImage(Manipulators.rotate(panel.getResultImage(), 270));
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 270));
 				refreshTools();
@@ -292,6 +300,7 @@ public class JGraphiteMainWindow {
 		JMenuItem mntmRotate180 = new JMenuItem("Rotate 180\u00BA");
 		mntmRotate180.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+	    		addToUndo();
 				panel.setResultImage(Manipulators.rotate(panel.getResultImage(), 180));
 				panel.setWipImage(Manipulators.rotate(panel.getWipImage(), 180));
 				refreshTools();
@@ -383,6 +392,12 @@ public class JGraphiteMainWindow {
 		menuBar.add(mnHelp);
 		
 		JMenuItem mntmAbout = new JMenuItem("About...");
+		mntmAbout.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JOptionPane.showMessageDialog(frmJgraphite, "JGraphite 1.0\nCopyright (c) 2014 by spliner21\nhttp://spliner.net", 
+												"About...", JOptionPane.INFORMATION_MESSAGE);
+			}
+		});
 		mnHelp.add(mntmAbout);
 		
 		return menuBar;
@@ -404,7 +419,7 @@ public class JGraphiteMainWindow {
 			}
 		});
 		btnNew.setToolTipText("New");
-		btnNew.setIcon(new ImageIcon(getClass().getResource("icons/new.png")));
+		btnNew.setIcon(new ImageIcon(getClass().getResource("/icons/new.png")));
 		toolBar.add(btnNew);
 		
 		/* Open file button */
@@ -415,7 +430,7 @@ public class JGraphiteMainWindow {
 			}
 		});
 		btnOpen.setToolTipText("Open...");
-		btnOpen.setIcon(new ImageIcon(getClass().getResource("icons/open.png")));
+		btnOpen.setIcon(new ImageIcon(getClass().getResource("/icons/open.png")));
 		toolBar.add(btnOpen);
 		
 		/* Save button */
@@ -426,7 +441,7 @@ public class JGraphiteMainWindow {
 			}
 		});
 		btnSave.setToolTipText("Save...");
-		btnSave.setIcon(new ImageIcon(getClass().getResource("icons/save.png")));
+		btnSave.setIcon(new ImageIcon(getClass().getResource("/icons/save.png")));
 		toolBar.add(btnSave);
 
 		/* Save as button */
@@ -437,7 +452,7 @@ public class JGraphiteMainWindow {
 			}
 		});
 		btnSaveAs.setToolTipText("Save as...");
-		btnSaveAs.setIcon(new ImageIcon(getClass().getResource("icons/saveas.png")));
+		btnSaveAs.setIcon(new ImageIcon(getClass().getResource("/icons/saveas.png")));
 		toolBar.add(btnSaveAs);
 		
 		JSeparator separator = new JSeparator();
@@ -449,7 +464,7 @@ public class JGraphiteMainWindow {
 		/* Undo button */
 		btnUndo = new JButton("");
 		btnUndo.setToolTipText("Undo");
-		btnUndo.setIcon(new ImageIcon(getClass().getResource("icons/undo.png")));
+		btnUndo.setIcon(new ImageIcon(getClass().getResource("/icons/undo.png")));
 		btnUndo.setEnabled(false);
 		btnUndo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -461,7 +476,7 @@ public class JGraphiteMainWindow {
 		/* Redo button */
 		btnRedo = new JButton("");
 		btnRedo.setToolTipText("Redo");
-		btnRedo.setIcon(new ImageIcon(getClass().getResource("icons/redo.png")));
+		btnRedo.setIcon(new ImageIcon(getClass().getResource("/icons/redo.png")));
 		btnRedo.setEnabled(false);
 		btnRedo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -476,9 +491,8 @@ public class JGraphiteMainWindow {
 		/* Thickness tool property */
 		JLabel lblThickness = new JLabel("Thickness");
 		toolBar.add(lblThickness);
-
-		SpinnerNumberModel model1 = new SpinnerNumberModel(10, 0, 25, 1);   
-		thickness = new JSpinner(model1);
+  
+		thickness = new JSpinner(new SpinnerNumberModel(10, 0, 50, 1));
 		thickness.setMaximumSize(new Dimension(200, 25));
 		thickness.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
@@ -635,7 +649,7 @@ public class JGraphiteMainWindow {
 		JButton btnPencil = new JButton("");
 		btnPencil.setVerticalAlignment(SwingConstants.TOP);
 		btnPencil.setToolTipText("Pencil");
-		btnPencil.setIcon(new ImageIcon(getClass().getResource("icons/pencil.png")));
+		btnPencil.setIcon(new ImageIcon(getClass().getResource("/icons/pencil.png")));
 		btnPencil.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				changeTool(ToolID.Pencil);
@@ -646,7 +660,7 @@ public class JGraphiteMainWindow {
 		JButton btnBrush = new JButton("");
 		btnBrush.setVerticalAlignment(SwingConstants.TOP);
 		btnBrush.setToolTipText("Brush");
-		btnBrush.setIcon(new ImageIcon(getClass().getResource("icons/brush.png")));
+		btnBrush.setIcon(new ImageIcon(getClass().getResource("/icons/brush.png")));
 		btnBrush.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				changeTool(ToolID.Brush);
@@ -657,7 +671,7 @@ public class JGraphiteMainWindow {
 		JButton btnRubber = new JButton("");
 		btnRubber.setVerticalAlignment(SwingConstants.TOP);
 		btnRubber.setToolTipText("Rubber");
-		btnRubber.setIcon(new ImageIcon(getClass().getResource("icons/rubber.png")));
+		btnRubber.setIcon(new ImageIcon(getClass().getResource("/icons/rubber.png")));
 		btnRubber.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				changeTool(ToolID.Rubber);
@@ -672,7 +686,7 @@ public class JGraphiteMainWindow {
 		JButton btnLine = new JButton("");
 		btnLine.setVerticalAlignment(SwingConstants.TOP);
 		btnLine.setToolTipText("Line");
-		btnLine.setIcon(new ImageIcon(getClass().getResource("icons/line.png")));
+		btnLine.setIcon(new ImageIcon(getClass().getResource("/icons/line.png")));
 		btnLine.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				changeTool(ToolID.Line);
@@ -683,7 +697,7 @@ public class JGraphiteMainWindow {
 		JButton btnRectangle = new JButton("");
 		btnRectangle.setVerticalAlignment(SwingConstants.TOP);
 		btnRectangle.setToolTipText("Rectangle");
-		btnRectangle.setIcon(new ImageIcon(getClass().getResource("icons/rectangle.png")));
+		btnRectangle.setIcon(new ImageIcon(getClass().getResource("/icons/rectangle.png")));
 		btnRectangle.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				changeTool(ToolID.Rectangle);
@@ -693,7 +707,7 @@ public class JGraphiteMainWindow {
 		
 		JButton btnOval = new JButton("");
 		btnOval.setToolTipText("Oval");
-		btnOval.setIcon(new ImageIcon(getClass().getResource("icons/oval.png")));
+		btnOval.setIcon(new ImageIcon(getClass().getResource("/icons/oval.png")));
 		btnOval.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				changeTool(ToolID.Oval);
@@ -707,7 +721,7 @@ public class JGraphiteMainWindow {
 		
 		JButton btnFill = new JButton("");
 		btnFill.setToolTipText("Paint bucket");
-		btnFill.setIcon(new ImageIcon(getClass().getResource("icons/paint_bucket.png")));
+		btnFill.setIcon(new ImageIcon(getClass().getResource("/icons/paint_bucket.png")));
 		btnFill.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				changeTool(ToolID.PaintBucket);
@@ -721,7 +735,7 @@ public class JGraphiteMainWindow {
 		
 		JButton btnFlipH = new JButton("");
 		btnFlipH.setToolTipText("Flip horizontally");
-		btnFlipH.setIcon(new ImageIcon(getClass().getResource("icons/flip_h.png")));
+		btnFlipH.setIcon(new ImageIcon(getClass().getResource("/icons/flip_h.png")));
 		btnFlipH.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				addToUndo();
@@ -736,7 +750,7 @@ public class JGraphiteMainWindow {
 		
 		JButton btnFlipV = new JButton("");
 		btnFlipV.setToolTipText("Flip vertically");
-		btnFlipV.setIcon(new ImageIcon(getClass().getResource("icons/flip_v.png")));
+		btnFlipV.setIcon(new ImageIcon(getClass().getResource("/icons/flip_v.png")));
 		btnFlipV.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				addToUndo();
@@ -751,7 +765,7 @@ public class JGraphiteMainWindow {
 		
 		JButton btnRotate90cw = new JButton("");
 		btnRotate90cw.setToolTipText("Rotate 90 degrees CW");
-		btnRotate90cw.setIcon(new ImageIcon(getClass().getResource("icons/rotate_90_clockwise.png")));
+		btnRotate90cw.setIcon(new ImageIcon(getClass().getResource("/icons/rotate_90_clockwise.png")));
 		btnRotate90cw.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				addToUndo();
@@ -767,7 +781,7 @@ public class JGraphiteMainWindow {
 		
 		JButton btnRotate90ccw = new JButton("");
 		btnRotate90ccw.setToolTipText("Rotate 90 degrees CCW");
-		btnRotate90ccw.setIcon(new ImageIcon(getClass().getResource("icons/rotate_90_counterclockwise.png")));
+		btnRotate90ccw.setIcon(new ImageIcon(getClass().getResource("/icons/rotate_90_counterclockwise.png")));
 		btnRotate90ccw.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				addToUndo();
@@ -783,7 +797,7 @@ public class JGraphiteMainWindow {
 		
 		JButton btnRotate180 = new JButton("");
 		btnRotate180.setToolTipText("Rotate 180 degrees");
-		btnRotate180.setIcon(new ImageIcon(getClass().getResource("icons/rotate_180.png")));
+		btnRotate180.setIcon(new ImageIcon(getClass().getResource("/icons/rotate_180.png")));
 		btnRotate180.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				addToUndo();
@@ -942,6 +956,7 @@ public class JGraphiteMainWindow {
 			break;
 		
 		}
+		refreshColors();
 	}
 	
 	/**
@@ -998,6 +1013,16 @@ public class JGraphiteMainWindow {
 		if(dimensions == null)
 			return;
 
+        /* Clear stacks */
+        undoStack.clear();
+        redoStack.clear();
+        
+        /* disable undo and redo buttons */
+        btnUndo.setEnabled(false);
+        btnRedo.setEnabled(false);
+        mntmUndo.setEnabled(false);
+        mntmRedo.setEnabled(false);
+        
 		imgWidth = dimensions.x;
 		imgHeight = dimensions.y;
 		panel.constructImage(imgWidth, imgHeight);
@@ -1082,6 +1107,8 @@ public class JGraphiteMainWindow {
 	 * Adds actual result image to undo
 	 */
 	private void addToUndo() {
+		while(undoStack.size() >= 10)
+			undoStack.removeElementAt(0);
 		BufferedImage res = panel.getResultImage();
 		BufferedImage tmp = new BufferedImage(res.getWidth(), res.getHeight(), res.getType());
 		tmp.setData(res.getData());
@@ -1090,7 +1117,7 @@ public class JGraphiteMainWindow {
 		btnUndo.setEnabled(true);
 		btnRedo.setEnabled(false);
         mntmUndo.setEnabled(true);
-        mntmRedo.setEnabled(false);		
+        mntmRedo.setEnabled(false);	
 	}
 
 	/**
